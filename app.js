@@ -260,7 +260,8 @@ async function loadData() {
       loadAlertes(shinobiMap),
       loadPlanning(shinobiMap),
       loadDossiersRecents(),
-      loadLavande(shinobiMap)
+      loadLavande(shinobiMap),
+      loadLavandeTop3()
     ]);
   } catch (e) { console.error('Erreur chargement données:', e); }
 }
@@ -478,6 +479,28 @@ async function loadLavande(shinobiMap) {
       </div>`;
     lavandeList.appendChild(li);
   });
+}
+
+async function loadLavandeTop3() {
+  const top3List = document.getElementById('lavande-top3-list');
+  try {
+    const top3 = await supaGet('lavande_totaux', 'select=donneur,total,nb_dons&order=total.desc&limit=3');
+    top3List.innerHTML = '';
+    if (top3.length === 0) {
+      top3List.innerHTML = '<li class="empty-hint">Aucun don enregistré pour le moment</li>';
+      return;
+    }
+    const medailles = ['🥇', '🥈', '🥉'];
+    top3.forEach((d, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="lavande-top3-medaille">${medailles[i] || ''}</span>
+        <span class="lavande-top3-nom">${escapeHtml(d.donneur)}</span>
+        <span class="lavande-montant">${Number(d.total).toLocaleString('fr-FR')} lavande</span>
+        <span class="lavande-top3-dons">(${d.nb_dons} don${d.nb_dons > 1 ? 's' : ''})</span>`;
+      top3List.appendChild(li);
+    });
+  } catch (e) { console.error('Erreur chargement top 3 lavande:', e); }
 }
 
 // Remplit le menu des jours (aujourd'hui + 13 jours), sans afficher l'année
@@ -803,11 +826,14 @@ document.getElementById('patient-clear-btn').addEventListener('click', async fun
 document.getElementById('lavande-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUser) return;
-  const donneur = document.getElementById('lavande-nom').value.trim();
+  const prenom = document.getElementById('lavande-prenom').value.trim();
+  const nom = document.getElementById('lavande-nom').value.trim();
   const montant = parseInt(document.getElementById('lavande-montant').value, 10);
-  if (!donneur || !montant || montant < 1) return;
+  if (!prenom || !nom || !montant || montant < 1) return;
+  const donneur = `${prenom} ${nom}`;
   try {
     await supaPost('lavande', { shinobi_id: currentUser.id, donneur, montant });
+    document.getElementById('lavande-prenom').value = '';
     document.getElementById('lavande-nom').value = '';
     document.getElementById('lavande-montant').value = '';
     loadData();

@@ -273,6 +273,15 @@ body.dark .dossier-click:hover { background: rgba(232,168,124,.08); }
 /* Registre de lavande */
 .lavande-montant { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; background: rgba(140,110,190,.15); border: 1px solid rgba(140,110,190,.4); color: #7a5fa8; }
 body.dark .lavande-montant { background: rgba(180,150,230,.15); border-color: rgba(180,150,230,.4); color: #c4aef0; }
+
+.lavande-top3 { margin: 18px 0; padding: 14px 16px; border-radius: 10px; background: rgba(140,110,190,.06); border: 1px solid rgba(140,110,190,.25); }
+.lavande-top3 h4 { margin-bottom: 10px; }
+.lavande-top3 ol { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lavande-top3 li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lavande-top3-medaille { font-size: 18px; }
+.lavande-top3-nom { font-weight: 600; }
+.lavande-top3-dons { font-size: 12px; color: var(--text-light); }
+body.dark .lavande-top3 { background: rgba(180,150,230,.06); border-color: rgba(180,150,230,.25); }
 body.dark .cours-participants ul li { color: #f3e8d0; }
 
 h3 { font-family: 'Cinzel', serif; font-size: 20px; margin-bottom: 8px; color: var(--brown-dark); }
