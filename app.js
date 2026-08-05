@@ -246,6 +246,8 @@ async function quitterPoste() {
 // --- Sons d'alerte ---
 const sonUrgence = new Audio('merle-sonnerie.mp3');
 const sonChirurgien = new Audio('pluvier-dore-sonnerie.mp3');
+sonUrgence.volume = 0.4;
+sonChirurgien.volume = 0.4;
 let alertesConnues = new Set();
 
 // --- Data refresh ---
