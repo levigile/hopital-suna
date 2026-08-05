@@ -237,6 +237,14 @@ async function loadRecap() {
 }
 
 // --- Détail des postes ---
+let detailPostesCache = [];
+let detailEditingId = null;
+
+function toDatetimeLocal(date) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 async function loadDetail() {
   try {
     let query = 'select=id,debut,fin,actif,shinobi_id';
@@ -248,31 +256,51 @@ async function loadDetail() {
     if (shinobiFilter !== 'all') query += `&shinobi_id=eq.${shinobiFilter}`;
 
     query += '&order=debut.desc&limit=100';
-    const postes = await supaGet('postes', query);
+    detailPostesCache = await supaGet('postes', query);
+    detailEditingId = null;
+    renderDetail();
+  } catch (e) { console.error(e); }
+}
 
-    const tbody = document.getElementById('detail-body');
-    tbody.innerHTML = '';
+function renderDetail() {
+  const postes = detailPostesCache;
+  const tbody = document.getElementById('detail-body');
+  tbody.innerHTML = '';
 
-    if (postes.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Aucun poste enregistré</td></tr>';
-      return;
-    }
+  if (postes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Aucun poste enregistré</td></tr>';
+    return;
+  }
 
-    postes.forEach(p => {
-      const s = shinobiMap[p.shinobi_id];
-      if (!s) return;
-      const debut = new Date(p.debut);
-      const fin = p.fin ? new Date(p.fin) : null;
+  postes.forEach(p => {
+    const s = shinobiMap[p.shinobi_id];
+    if (!s) return;
+    const debut = new Date(p.debut);
+    const fin = p.fin ? new Date(p.fin) : null;
+    const dureeMin = fin ? Math.round((fin - debut) / 60000) : Math.round((new Date() - debut) / 60000);
+
+    const tr = document.createElement('tr');
+
+    if (detailEditingId === p.id) {
+      tr.innerHTML = `
+        <td>${esc(s.prenom)} ${esc(s.nom)}</td>
+        <td colspan="2"><input type="datetime-local" class="inline-input detail-edit-debut" value="${toDatetimeLocal(debut)}"></td>
+        <td><input type="datetime-local" class="inline-input detail-edit-fin" value="${fin ? toDatetimeLocal(fin) : ''}"></td>
+        <td colspan="2"><span class="info-text" style="margin:0">Laisser "Fin" vide = poste toujours en cours</span></td>
+        <td>
+          <button class="btn-sm btn-detail-valider" data-id="${p.id}">Valider</button>
+          <button class="btn-sm btn-detail-annuler">Annuler</button>
+        </td>
+      `;
+    } else {
       const date = debut.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
       const heureDebut = debut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       const heureFin = fin ? fin.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
-      const dureeMin = fin ? Math.round((fin - debut) / 60000) : Math.round((new Date() - debut) / 60000);
       const duree = fin ? formatDuration(Math.round((fin - debut) / 60000)) : '—';
       const statut = p.actif
         ? '<span class="badge-actif en-cours">En cours</span>'
         : '<span class="badge-actif termine">Terminé</span>';
 
-      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${esc(s.prenom)} ${esc(s.nom)}</td>
         <td>${date}</td>
@@ -280,23 +308,61 @@ async function loadDetail() {
         <td>${heureFin}</td>
         <td>${duree}</td>
         <td>${statut}</td>
-        <td><button class="btn-poste-delete" data-id="${p.id}" data-nom="${esc(s.prenom)} ${esc(s.nom)}" data-duree="${formatDuration(dureeMin)}">Supprimer</button></td>
+        <td>
+          <button class="btn-sm btn-poste-modifier" data-id="${p.id}">Modifier</button>
+          <button class="btn-sm btn-poste-delete" data-id="${p.id}" data-nom="${esc(s.prenom)} ${esc(s.nom)}" data-duree="${formatDuration(dureeMin)}">Supprimer</button>
+        </td>
       `;
-      tbody.appendChild(tr);
-    });
+    }
+    tbody.appendChild(tr);
+  });
 
-    tbody.querySelectorAll('.btn-poste-delete').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const ok = confirm(`Supprimer ce poste de ${btn.dataset.nom} (${btn.dataset.duree}) ?\n\nLe temps correspondant sera retiré de son total et de sa paie. Action définitive.`);
-        if (!ok) return;
-        btn.disabled = true;
-        try {
-          await supaDelete('postes', `id=eq.${btn.dataset.id}`);
-          await loadAll();
-        } catch (e) { console.error(e); btn.disabled = false; }
-      });
+  tbody.querySelectorAll('.btn-poste-modifier').forEach(btn => {
+    btn.addEventListener('click', () => {
+      detailEditingId = btn.dataset.id;
+      renderDetail();
     });
-  } catch (e) { console.error(e); }
+  });
+
+  tbody.querySelectorAll('.btn-detail-annuler').forEach(btn => {
+    btn.addEventListener('click', () => {
+      detailEditingId = null;
+      renderDetail();
+    });
+  });
+
+  tbody.querySelectorAll('.btn-detail-valider').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const debutVal = tr.querySelector('.detail-edit-debut').value;
+      const finVal = tr.querySelector('.detail-edit-fin').value;
+      if (!debutVal) { alert('La date de début est obligatoire.'); return; }
+      const nouveauDebut = new Date(debutVal);
+      const nouveauFin = finVal ? new Date(finVal) : null;
+      if (nouveauFin && nouveauFin <= nouveauDebut) { alert('La fin doit être après le début.'); return; }
+      btn.disabled = true;
+      try {
+        await supaPatch('postes', `id=eq.${btn.dataset.id}`, {
+          debut: nouveauDebut.toISOString(),
+          fin: nouveauFin ? nouveauFin.toISOString() : null,
+          actif: !nouveauFin
+        }, true);
+        await loadAll();
+      } catch (e) { console.error(e); alert('Erreur lors de la modification du poste.'); btn.disabled = false; }
+    });
+  });
+
+  tbody.querySelectorAll('.btn-poste-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ok = confirm(`Supprimer ce poste de ${btn.dataset.nom} (${btn.dataset.duree}) ?\n\nLe temps correspondant sera retiré de son total et de sa paie. Action définitive.`);
+      if (!ok) return;
+      btn.disabled = true;
+      try {
+        await supaDelete('postes', `id=eq.${btn.dataset.id}`);
+        await loadAll();
+      } catch (e) { console.error(e); btn.disabled = false; }
+    });
+  });
 }
 
 // =====================
