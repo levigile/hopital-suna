@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hôpital de Suna — Centre Médical Shinobi</title>
+  <link rel="stylesheet" href="style.css?v=25">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="sand-overlay"></div>
+  <button id="theme-toggle" class="theme-toggle" title="Basculer clair / sombre"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.5A7.5 7.5 0 1 1 10.5 4 6 6 0 0 0 20 13.5Z"/></svg></button>
+
+  <!-- LOGIN / REGISTER -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-container">
+      <div class="hospital-emblem"><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
+      <h1>Hôpital de Sunagakure</h1>
+      <p class="subtitle">Centre Médical Shinobi — Unité de Soin</p>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Identification</button>
+        <button class="tab" data-tab="register">Enregistrement</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <div class="field"><label>Nom</label><input type="text" id="login-nom" placeholder="Gaïa" maxlength="60" autocomplete="off" required></div>
+        <div class="field"><label>Prénom</label><input type="text" id="login-prenom" placeholder="Artel" maxlength="60" autocomplete="off" required></div>
+        <div class="field"><label>Sceau Secret</label><input type="password" id="login-sceau" placeholder="Votre sceau d'identification" maxlength="100" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-primary">Entrer dans l'Hôpital</button>
+        <p id="login-error" class="error"></p>
+      </form>
+
+      <form id="register-form" class="auth-form hidden">
+        <div class="field"><label>Nom</label><input type="text" id="reg-nom" placeholder="Gaïa" maxlength="60" autocomplete="off" required></div>
+        <div class="field"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Artel" maxlength="60" autocomplete="off" required></div>
+        <div class="field"><label>Sceau Secret</label><input type="password" id="reg-sceau" placeholder="Choisissez votre sceau (6 caractères min.)" maxlength="100" autocomplete="new-password" required></div>
+        <div class="field"><label>Confirmer le Sceau</label><input type="password" id="reg-sceau2" placeholder="Confirmez votre sceau" maxlength="100" autocomplete="new-password" required></div>
+        <button type="submit" class="btn-primary">S'enregistrer au Centre</button>
+        <p id="reg-error" class="error"></p>
+        <p id="reg-success" class="success"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-screen" class="screen hidden">
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+          <span class="brand-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+          <span class="brand-txt">Hôpital<small>Sunagakure</small></span>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="snav active" data-group="poste"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg> Mon Poste</button>
+          <button class="snav" data-group="alertes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg> Alertes</button>
+          <button class="snav" data-group="planning"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16"/><path d="M8 3v3.5M16 3v3.5"/></svg> Planning des Cours</button>
+          <button class="snav" data-group="patients"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/><path d="M12 10v6M9 13h6"/></svg> Patients</button>
+          <button class="snav" data-group="lavande"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-2.5 0-4.5-2-4.5-5C7.5 5 9.5 3 12 3s4.5 2 4.5 5c0 3-2 5-4.5 5z"/><path d="M8.5 16c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg> Lavande</button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="sidebar-user"><span id="user-name"></span></div>
+          <a href="admin.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.7v5.1c0 4.2 3 7.3 7 8.7 4-1.4 7-4.5 7-8.7V5.7L12 3Z"/></svg> Gérance</a>
+          <button id="logout-btn" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg> Quitter le poste</button>
+        </div>
+      </aside>
+
+      <div class="admin-content">
+        <main>
+          <section class="status-section">
+            <div id="server-status" class="status-card">
+              <div class="status-indicator offline"></div>
+              <span>Le village est endormi — Hors horaires de service</span>
+            </div>
+            <div class="clock" id="clock"></div>
+          </section>
+
+          <!-- GROUPE POSTE -->
+          <div class="group-panel active" data-group="poste">
+            <section class="poste-section">
+              <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg> Prise de Poste</h3>
+              <p class="info-text">Les portes de l'hôpital sont ouvertes de <strong>18h30</strong> à <strong>3h00</strong>.</p>
+              <div class="poste-controls">
+                <button id="btn-poste" class="btn-poste" disabled>Prendre son poste</button>
+                <span id="poste-status" class="poste-badge">Hors service</span>
+              </div>
+              <div id="poste-list" class="poste-list">
+                <h4>Personnel en poste actuellement</h4>
+                <ul id="personnel-list"></ul>
+              </div>
+            </section>
+          </div>
+
+          <!-- GROUPE ALERTES -->
+          <div class="group-panel" data-group="alertes">
+            <section class="alertes-section">
+              <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg> Alertes Médicales</h3>
+              <div class="alerte-buttons">
+                <button id="btn-urgence" class="btn-alerte urgence" disabled>
+                  <span class="alerte-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor" stroke="none"/></svg></span>
+                  <span class="alerte-title">Appel d'Urgence</span>
+                  <span class="alerte-desc">Demander des renforts médicaux immédiats</span>
+                </button>
+                <button id="btn-chirurgien" class="btn-alerte chirurgien" disabled>
+                  <span class="alerte-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><path d="M8 7.2 20 17M8 16.8 20 7"/></svg></span>
+                  <span class="alerte-title">Demande de Chirurgien</span>
+                  <span class="alerte-desc">Requérir un spécialiste en chirurgie</span>
+                </button>
+              </div>
+              <div id="alertes-actives" class="alertes-list hidden">
+                <h4>Alertes en cours</h4>
+                <ul id="alertes-list"></ul>
+              </div>
+            </section>
+          </div>
+
+          <!-- GROUPE PLANNING DES COURS -->
+          <div class="group-panel" data-group="planning">
+            <section class="planning-section">
+              <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16"/><path d="M8 3v3.5M16 3v3.5"/></svg> Planning des Cours</h3>
+              <p class="info-text">Programme et consulte les prochains rendez-vous de formation de la Seimei.</p>
+              <form id="planning-form" class="cours-form">
+                <input type="text" id="planning-titre" placeholder="Nom du cours (ex. Suture avancée)" maxlength="120" required>
+                <div class="planning-dt-row">
+                  <select id="planning-jour" required></select>
+                  <input type="time" id="planning-heure" required>
+                </div>
+                <input type="text" id="planning-enseignant" placeholder="Nom de l'enseignant" maxlength="80" required>
+                <div style="display:flex;gap:10px;align-items:center">
+                  <button type="submit" id="planning-submit-btn" class="btn-primary">Ajouter au planning</button>
+                  <button type="button" id="planning-cancel-edit" class="btn-sm hidden">Annuler la modification</button>
+                </div>
+              </form>
+              <div class="cours-list">
+                <h4>Prochains cours</h4>
+                <ul id="planning-list"></ul>
+              </div>
+            </section>
+          </div>
+
+          <!-- GROUPE PATIENTS -->
+          <div class="group-panel" data-group="patients">
+            <section class="patients-section">
+              <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/><path d="M12 10v6M9 13h6"/></svg> Registre des Patients</h3>
+              <p class="info-text">Recherche un patient pour consulter et compléter son historique de blessures.</p>
+
+              <div class="cours-form">
+                <input type="text" id="patient-search" placeholder="Rechercher un patient par nom..." maxlength="60" autocomplete="off">
+                <div class="patient-filters">
+                  <select id="filter-rank" autocomplete="off"><option value="">Tous les grades</option></select>
+                  <select id="filter-division" autocomplete="off"><option value="">Toutes les sections</option></select>
+                </div>
+              </div>
+              <ul id="patient-results" class="patient-results"></ul>
+
+              <div class="cours-list" id="dossiers-recents-wrap">
+                <h4>Dossiers récents</h4>
+                <ul id="patients-list"></ul>
+              </div>
+            </section>
+          </div>
+
+          <!-- GROUPE LAVANDE -->
+          <div class="group-panel" data-group="lavande">
+            <section class="lavande-section">
+              <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-2.5 0-4.5-2-4.5-5C7.5 5 9.5 3 12 3s4.5 2 4.5 5c0 3-2 5-4.5 5z"/><path d="M8.5 16c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg> Registre de Lavande</h3>
+              <p class="info-text">Note ici qui t'a donné de la lavande et en quelle quantité.</p>
+              <form id="lavande-form" class="cours-form">
+                <input type="text" id="lavande-nom" placeholder="Nom de la personne qui a donné" maxlength="80" required>
+                <input type="number" id="lavande-montant" placeholder="Quantité de lavande" min="1" required>
+                <button type="submit" class="btn-primary">Enregistrer le don</button>
+              </form>
+              <div class="cours-list">
+                <h4>Dons enregistrés</h4>
+                <ul id="lavande-list"></ul>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fiche Patient Modal -->
+  <div id="patient-modal-overlay" class="modal-overlay hidden">
+    <div class="modal patient-modal">
+      <div class="patient-head">
+        <div class="cours-left">
+          <div class="cours-titre" id="patient-card-nom"></div>
+          <div class="cours-meta" id="patient-card-meta"></div>
+        </div>
+        <button type="button" class="btn-del-planning" id="patient-clear-btn" style="display:none;width:auto;padding:0 10px;font-size:12px;" title="Supprimer tout l'historique de ce patient">Supprimer le dossier</button>
+      </div>
+
+      <div class="patient-cols">
+        <div class="patient-col">
+          <form id="blessure-form" class="cours-form" style="margin-top:12px;">
+            <input type="text" id="blessure-desc" placeholder="Blessure constatée (ex. fracture ouverte du tibia)" maxlength="200" required>
+            <textarea id="blessure-operation" placeholder="Opération / soins réalisés (ex. réalignement + suture + attelle)" rows="2"></textarea>
+            <button type="submit" class="btn-primary">Enregistrer les soins</button>
+          </form>
+
+          <div class="cours-list">
+            <h4>Historique des blessures</h4>
+            <ul id="blessures-list"></ul>
+          </div>
+        </div>
+
+        <div class="patient-col patient-fiche">
+          <h4>Fiche du patient</h4>
+          <form id="fiche-form" class="cours-form">
+            <div class="field"><label>Nom et prénom</label><input type="text" id="fiche-nom" maxlength="80" autocomplete="off"></div>
+            <div class="fiche-row">
+              <div class="field"><label>Sexe</label>
+                <select id="fiche-sexe" autocomplete="off">
+                  <option value="">—</option>
+                  <option value="Homme">Homme</option>
+                  <option value="Femme">Femme</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div class="field"><label>Groupe sanguin</label>
+                <select id="fiche-sang" autocomplete="off">
+                  <option value="">—</option>
+                  <option value="O−">O−</option><option value="O+">O+</option>
+                  <option value="A−">A−</option><option value="A+">A+</option>
+                  <option value="B−">B−</option><option value="B+">B+</option>
+                  <option value="AB−">AB−</option><option value="AB+">AB+</option>
+                </select>
+              </div>
+            </div>
+            <div class="fiche-row">
+              <div class="field"><label>Taille</label><input type="text" id="fiche-taille" placeholder="ex. 1m75" maxlength="20" autocomplete="off"></div>
+              <div class="field"><label>Poids</label><input type="text" id="fiche-poids" placeholder="ex. 68 kg" maxlength="20" autocomplete="off"></div>
+            </div>
+            <div class="field"><label>Nature de chakra</label><input type="text" id="fiche-chakra" placeholder="ex. Katon, Futon" maxlength="80" autocomplete="off"></div>
+            <div class="field"><label>Information supplémentaire</label><textarea id="fiche-infos" rows="2" placeholder="Allergies, antécédents, particularités..."></textarea></div>
+            <button type="submit" class="btn-primary">Enregistrer la fiche</button>
+            <div class="cours-meta" id="fiche-status"></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="patient-modal-close" class="btn-sm">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modal-title"></h3>
+      <textarea id="modal-message" placeholder="Décrivez la situation..." rows="3"></textarea>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-sm">Annuler</button>
+        <button id="modal-confirm" class="btn-primary">Envoyer l'alerte</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="common.js?v=1"></script>
+  <script src="app.js?v=23"></script>
+</body>
+</html>
