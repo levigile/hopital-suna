@@ -40,6 +40,7 @@
         <nav class="sidebar-nav">
           <button class="snav active" data-group="presence"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V8.5M9.5 2.5h5M12 2.5v2.5"/></svg> Présence</button>
           <button class="snav" data-group="paye"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.5" rx="7" ry="3"/><path d="M5 6.5v10c0 1.7 3.1 3 7 3s7-1.3 7-3v-10"/><path d="M5 11.5c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg> Paye</button>
+          <button class="snav" data-group="lavande"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-2.5 0-4.5-2-4.5-5C7.5 5 9.5 3 12 3s4.5 2 4.5 5c0 3-2 5-4.5 5z"/><path d="M8.5 16c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg> Lavande</button>
           <button class="snav" data-group="personnel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-3-4.9"/></svg> Personnel</button>
           <button class="snav" data-group="cours"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H18v15H6.5A1.5 1.5 0 0 0 5 19.5Z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H18"/></svg> Cours</button>
           <button class="snav" data-group="chat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h3v3l4-3h9a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z"/></svg> Chat</button>
@@ -151,6 +152,30 @@
                   </table>
                 </div>
                 <div class="paye-total">Total des payes : <strong id="paye-grand-total">0</strong> Ryos</div>
+              </div>
+            </details>
+          </div>
+
+          <!-- GROUPE LAVANDE (RACHATS) -->
+          <div class="group-panel" data-group="lavande">
+            <details class="acc" open>
+              <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-2.5 0-4.5-2-4.5-5C7.5 5 9.5 3 12 3s4.5 2 4.5 5c0 3-2 5-4.5 5z"/><path d="M8.5 16c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg><span>Rachats de Lavande</span><span class="acc-chevron"></span></summary>
+              <div class="acc-body">
+                <div class="paye-config">
+                  <p class="info-text">Taux de rachat (Ryos par unité de lavande) :</p>
+                  <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:12px">
+                    <div class="field" style="max-width:160px"><label>Ryos / unité</label><input type="number" id="taux-lavande" min="0" value="100"></div>
+                    <button id="btn-save-taux-lavande" class="btn-primary" style="width:auto;padding:10px 20px">Sauvegarder le taux</button>
+                  </div>
+                </div>
+                <div class="paye-total">Total à rembourser : <strong id="lavande-grand-total">0</strong> Ryos</div>
+                <div id="lavande-solde-acheteurs" class="lavande-solde-acheteurs"></div>
+                <div class="table-wrapper">
+                  <table id="lavande-admin-table">
+                    <thead><tr><th>Date</th><th>Vendeur</th><th>Quantité</th><th>Racheté par</th><th>Total (Ryos)</th><th>Remboursé</th><th>Actions</th></tr></thead>
+                    <tbody id="lavande-admin-body"></tbody>
+                  </table>
+                </div>
               </div>
             </details>
           </div>

@@ -222,6 +222,12 @@ body.dark .statut-absent { color: #ff8a7a; }
 
 .paye-ryos { font-weight: 700; color: var(--terracotta); }
 
+.lavande-solde-acheteurs { margin: 12px 0; }
+.lavande-solde-acheteurs h4 { margin-bottom: 6px; }
+.lavande-solde-acheteurs ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.lavande-solde-acheteurs li { font-size: 14px; }
+.lavande-solde-acheteurs strong { color: var(--terracotta); }
+
 /* Avertissements */
 .avert-form { margin-bottom: 8px; }
 .avert-form input {

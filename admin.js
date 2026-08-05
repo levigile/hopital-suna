@@ -162,10 +162,11 @@ document.getElementById('paye-period').addEventListener('change', loadPaye);
 // --- Load all ---
 async function loadAll() {
   await refreshShinobis();
+  await loadTauxLavandeAdmin();
   await Promise.all([
     loadStats(), loadRecap(), loadDetail(), loadGrades(), loadRoles(),
     loadPostesAdmin(), loadPaye(), loadAvertissements(), loadChat(),
-    loadCoursAdmin(), loadAbsences()
+    loadCoursAdmin(), loadAbsences(), loadLavandeAdmin()
   ]);
 }
 
@@ -474,6 +475,170 @@ async function togglePaye(shinobiId, periodeKey, checked) {
       await supaDelete('paye_versements', `shinobi_id=eq.${shinobiId}&periode_key=eq.${encodeURIComponent(periodeKey)}`);
     }
   } catch (e) { console.error(e); alert('Erreur lors de la mise à jour du statut de paye.'); }
+}
+
+// =====================
+// GESTION DES RACHATS DE LAVANDE
+// =====================
+let tauxLavande = 100;
+
+async function loadTauxLavandeAdmin() {
+  try {
+    const rows = await supaGet('config', 'cle=eq.taux_lavande&select=valeur');
+    if (rows.length > 0) tauxLavande = parseInt(rows[0].valeur, 10) || 100;
+    document.getElementById('taux-lavande').value = tauxLavande;
+  } catch (e) { console.error(e); }
+}
+
+document.getElementById('btn-save-taux-lavande').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save-taux-lavande');
+  const el = document.getElementById('taux-lavande');
+  const val = Math.max(0, parseInt(el.value, 10) || 0);
+  btn.disabled = true;
+  try {
+    await supaUpsert('config', { cle: 'taux_lavande', valeur: String(val) });
+    tauxLavande = val;
+    await loadLavandeAdmin();
+    const old = btn.textContent;
+    btn.textContent = '✓ Sauvegardé';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  } catch (e) {
+    console.error(e);
+    alert('Erreur lors de la sauvegarde du taux.');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+let lavandeAchatsCache = [];
+let lavandeEditingId = null;
+
+async function loadLavandeAdmin() {
+  try {
+    lavandeAchatsCache = await supaGet('lavande', 'select=id,vendeur,montant,rembourse,shinobi_id,created_at&order=created_at.desc');
+    lavandeEditingId = null;
+    renderLavandeAdmin();
+  } catch (e) { console.error(e); }
+}
+
+function renderLavandeAdmin() {
+  const achats = lavandeAchatsCache;
+  const tbody = document.getElementById('lavande-admin-body');
+  tbody.innerHTML = '';
+
+  if (achats.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Aucun achat enregistré</td></tr>';
+    document.getElementById('lavande-grand-total').textContent = '0';
+    document.getElementById('lavande-solde-acheteurs').innerHTML = '';
+    return;
+  }
+
+  let grandTotal = 0;
+  const soldeParAcheteur = {};
+
+  achats.forEach(a => {
+    const s = shinobiMap[a.shinobi_id];
+    const nomAcheteur = s ? `${s.prenom} ${s.nom}` : 'Inconnu';
+    const total = Number(a.montant) * tauxLavande;
+    const date = new Date(a.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+    if (!a.rembourse) {
+      grandTotal += total;
+      soldeParAcheteur[nomAcheteur] = (soldeParAcheteur[nomAcheteur] || 0) + total;
+    }
+
+    const tr = document.createElement('tr');
+    if (lavandeEditingId === a.id) {
+      tr.innerHTML = `
+        <td>${date}</td>
+        <td><input type="text" class="inline-input lavande-edit-vendeur" value="${esc(a.vendeur)}" maxlength="80"></td>
+        <td><input type="number" class="inline-input lavande-edit-montant" value="${a.montant}" min="1" style="width:70px"></td>
+        <td>${esc(nomAcheteur)}</td>
+        <td>${total.toLocaleString('fr-FR')} Ryos</td>
+        <td style="text-align:center"><input type="checkbox" disabled ${a.rembourse ? 'checked' : ''}></td>
+        <td>
+          <button class="btn-sm btn-lavande-valider" data-id="${a.id}">Valider</button>
+          <button class="btn-sm btn-lavande-annuler">Annuler</button>
+        </td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td>${date}</td>
+        <td><strong>${esc(a.vendeur)}</strong></td>
+        <td>${Number(a.montant).toLocaleString('fr-FR')}</td>
+        <td>${esc(nomAcheteur)}</td>
+        <td>${total.toLocaleString('fr-FR')} Ryos</td>
+        <td style="text-align:center"><input type="checkbox" class="lavande-rembourse-checkbox" data-id="${a.id}" ${a.rembourse ? 'checked' : ''}></td>
+        <td>
+          <button class="btn-sm btn-lavande-modifier" data-id="${a.id}">Modifier</button>
+          <button class="btn-sm btn-lavande-supprimer" data-id="${a.id}" data-vendeur="${esc(a.vendeur)}">Supprimer</button>
+        </td>
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('lavande-grand-total').textContent = grandTotal.toLocaleString('fr-FR');
+
+  const soldeEl = document.getElementById('lavande-solde-acheteurs');
+  const entries = Object.entries(soldeParAcheteur).sort((a, b) => b[1] - a[1]);
+  soldeEl.innerHTML = entries.length === 0
+    ? ''
+    : '<h4>À rembourser par personne</h4><ul>' + entries.map(([nom, total]) =>
+        `<li>${esc(nom)} : <strong>${total.toLocaleString('fr-FR')} Ryos</strong></li>`
+      ).join('') + '</ul>';
+
+  tbody.querySelectorAll('.lavande-rembourse-checkbox').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      cb.disabled = true;
+      try {
+        await supaPatch('lavande', `id=eq.${cb.dataset.id}`, {
+          rembourse: cb.checked,
+          rembourse_at: cb.checked ? new Date().toISOString() : null
+        }, true);
+        await loadLavandeAdmin();
+      } catch (e) { console.error(e); alert('Erreur lors de la mise à jour du remboursement.'); cb.disabled = false; }
+    });
+  });
+
+  tbody.querySelectorAll('.btn-lavande-modifier').forEach(btn => {
+    btn.addEventListener('click', () => {
+      lavandeEditingId = btn.dataset.id;
+      renderLavandeAdmin();
+    });
+  });
+
+  tbody.querySelectorAll('.btn-lavande-annuler').forEach(btn => {
+    btn.addEventListener('click', () => {
+      lavandeEditingId = null;
+      renderLavandeAdmin();
+    });
+  });
+
+  tbody.querySelectorAll('.btn-lavande-valider').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const nouveauVendeur = tr.querySelector('.lavande-edit-vendeur').value.trim();
+      const nouveauMontant = parseInt(tr.querySelector('.lavande-edit-montant').value, 10);
+      if (!nouveauVendeur || !nouveauMontant || nouveauMontant < 1) { alert('Vendeur ou quantité invalide.'); return; }
+      btn.disabled = true;
+      try {
+        await supaPatch('lavande', `id=eq.${btn.dataset.id}`, { vendeur: nouveauVendeur, montant: nouveauMontant }, true);
+        await loadLavandeAdmin();
+      } catch (e) { console.error(e); alert('Erreur lors de la modification.'); btn.disabled = false; }
+    });
+  });
+
+  tbody.querySelectorAll('.btn-lavande-supprimer').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`Supprimer cet achat de lavande (${btn.dataset.vendeur}) ?`)) return;
+      btn.disabled = true;
+      try {
+        await supaDelete('lavande', `id=eq.${btn.dataset.id}`);
+        await loadLavandeAdmin();
+      } catch (e) { console.error(e); btn.disabled = false; }
+    });
+  });
 }
 
 // =====================

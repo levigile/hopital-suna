@@ -17,6 +17,7 @@ let enPoste = false;
 let posteId = null;
 let refreshInterval = null;
 let annuaire = [];
+let tauxLavande = 100;
 let lastPlanning = [];
 let editingPlanningId = null;
 
@@ -152,6 +153,7 @@ function showDashboard() {
   document.getElementById('dashboard-screen').classList.remove('hidden');
   document.getElementById('user-name').textContent = `${currentUser.prenom} ${currentUser.nom}`;
   checkExistingPoste();
+  loadTauxLavande();
   loadData();
   showGroup('poste');
   refreshInterval = setInterval(loadData, 10000);
@@ -457,24 +459,35 @@ async function loadDossiersRecents() {
   } catch (e) { console.error('Erreur chargement dossiers patients:', e); }
 }
 
+async function loadTauxLavande() {
+  try {
+    const rows = await supaGet('config', 'cle=eq.taux_lavande&select=valeur');
+    if (rows.length > 0) tauxLavande = parseInt(rows[0].valeur, 10) || 100;
+  } catch (e) { console.error(e); }
+}
+
 async function loadLavande(shinobiMap) {
-  const lavande = await supaGet('lavande', 'select=id,donneur,montant,created_at,shinobi_id&order=created_at.desc&limit=60');
+  const lavande = await supaGet('lavande', 'select=id,vendeur,montant,rembourse,created_at,shinobi_id&order=created_at.desc&limit=60');
   const lavandeList = document.getElementById('lavande-list');
   lavandeList.innerHTML = '';
   if (lavande.length === 0) {
-    lavandeList.innerHTML = '<li class="empty-hint">Aucun don enregistré pour le moment</li>';
+    lavandeList.innerHTML = '<li class="empty-hint">Aucun achat enregistré pour le moment</li>';
     return;
   }
   lavande.forEach(l => {
     const s = shinobiMap[l.shinobi_id];
     const par = s ? `${s.prenom} ${s.nom}` : 'Inconnu';
     const date = new Date(l.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const cout = Number(l.montant) * tauxLavande;
+    const statut = l.rembourse
+      ? '<span class="lavande-statut rembourse">Remboursé</span>'
+      : '<span class="lavande-statut en-attente">En attente</span>';
     const li = document.createElement('li');
     li.innerHTML = `
       <div class="cours-item">
         <div class="cours-left">
-          <div class="cours-titre">${escapeHtml(l.donneur)} <span class="lavande-montant">${Number(l.montant).toLocaleString('fr-FR')} lavande</span></div>
-          <div class="cours-meta">Enregistré par ${escapeHtml(par)} · ${date}</div>
+          <div class="cours-titre">${escapeHtml(l.vendeur)} <span class="lavande-montant">${Number(l.montant).toLocaleString('fr-FR')} lavande</span> <span class="lavande-montant">${cout.toLocaleString('fr-FR')} Ryos</span></div>
+          <div class="cours-meta">Racheté par ${escapeHtml(par)} · ${date} · ${statut}</div>
         </div>
       </div>`;
     lavandeList.appendChild(li);
@@ -484,10 +497,10 @@ async function loadLavande(shinobiMap) {
 async function loadLavandeTop3() {
   const top3List = document.getElementById('lavande-top3-list');
   try {
-    const top3 = await supaGet('lavande_totaux', 'select=donneur,total,nb_dons&order=total.desc&limit=3');
+    const top3 = await supaGet('lavande_totaux', 'select=vendeur,total,nb_achats&order=total.desc&limit=3');
     top3List.innerHTML = '';
     if (top3.length === 0) {
-      top3List.innerHTML = '<li class="empty-hint">Aucun don enregistré pour le moment</li>';
+      top3List.innerHTML = '<li class="empty-hint">Aucun achat enregistré pour le moment</li>';
       return;
     }
     const medailles = ['🥇', '🥈', '🥉'];
@@ -495,9 +508,9 @@ async function loadLavandeTop3() {
       const li = document.createElement('li');
       li.innerHTML = `
         <span class="lavande-top3-medaille">${medailles[i] || ''}</span>
-        <span class="lavande-top3-nom">${escapeHtml(d.donneur)}</span>
+        <span class="lavande-top3-nom">${escapeHtml(d.vendeur)}</span>
         <span class="lavande-montant">${Number(d.total).toLocaleString('fr-FR')} lavande</span>
-        <span class="lavande-top3-dons">(${d.nb_dons} don${d.nb_dons > 1 ? 's' : ''})</span>`;
+        <span class="lavande-top3-dons">(${d.nb_achats} achat${d.nb_achats > 1 ? 's' : ''})</span>`;
       top3List.appendChild(li);
     });
   } catch (e) { console.error('Erreur chargement top 3 lavande:', e); }
@@ -823,6 +836,12 @@ document.getElementById('patient-clear-btn').addEventListener('click', async fun
   } catch (e) { console.error(e); alert('Erreur lors de la suppression du dossier.'); }
 });
 
+document.getElementById('lavande-montant').addEventListener('input', () => {
+  const montant = parseInt(document.getElementById('lavande-montant').value, 10);
+  const coutEl = document.getElementById('lavande-cout');
+  coutEl.textContent = (montant > 0) ? `= ${(montant * tauxLavande).toLocaleString('fr-FR')} Ryos à avancer` : '';
+});
+
 document.getElementById('lavande-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUser) return;
@@ -830,14 +849,15 @@ document.getElementById('lavande-form').addEventListener('submit', async (e) => 
   const nom = document.getElementById('lavande-nom').value.trim();
   const montant = parseInt(document.getElementById('lavande-montant').value, 10);
   if (!prenom || !nom || !montant || montant < 1) return;
-  const donneur = `${prenom} ${nom}`;
+  const vendeur = `${prenom} ${nom}`;
   try {
-    await supaPost('lavande', { shinobi_id: currentUser.id, donneur, montant });
+    await supaPost('lavande', { shinobi_id: currentUser.id, vendeur, montant });
     document.getElementById('lavande-prenom').value = '';
     document.getElementById('lavande-nom').value = '';
     document.getElementById('lavande-montant').value = '';
+    document.getElementById('lavande-cout').textContent = '';
     loadData();
-  } catch (err) { console.error(err); alert("Erreur lors de l'enregistrement du don."); }
+  } catch (err) { console.error(err); alert("Erreur lors de l'enregistrement de l'achat."); }
 });
 
 // --- Alertes ---
